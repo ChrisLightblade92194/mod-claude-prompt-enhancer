@@ -1,0 +1,17 @@
+# Type declarations Claude Code generates when it loads the mod
+.claude-plugin/types/
+
+# Folder where Claude Code unpacks MCP bundles
+.mcpb-cache/
+
+# Logs
+*.log
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.vscode/
+.idea/

@@ -1,0 +1,6 @@
+{
+  "name": "prompt-enhancer",
+  "description": "Prompt Enhancer: a Claude Code mod that rewrites a prompt draft with fitting skills, project context, decisions to ask and the expected result.",
+  "owner": { "name": "ChrisLightblade92194" },
+  "plugins": [{ "name": "prompt-enhancer", "source": "./" }]
+}
