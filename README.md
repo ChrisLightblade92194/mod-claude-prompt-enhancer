@@ -22,7 +22,7 @@ The rewrite is written in the language of your draft. The button labels and stat
 At the prompt of a Claude Code terminal session:
 
 ```
-/plugin install prompt-enhancer --marketplace ChrisLightblade92194/prompt-enhancer
+/plugin install prompt-enhancer --marketplace ChrisLightblade92194/mod-claude-prompt-enhancer
 ```
 
 Answer `y` to add the marketplace, then pick a scope (user scope makes it available in every session).
@@ -30,10 +30,10 @@ Answer `y` to add the marketplace, then pick a scope (user scope makes it availa
 From a shell:
 
 ```bash
-claude plugin install prompt-enhancer --marketplace ChrisLightblade92194/prompt-enhancer
+claude plugin install prompt-enhancer --marketplace ChrisLightblade92194/mod-claude-prompt-enhancer
 ```
 
-In the Claude desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `ChrisLightblade92194/prompt-enhancer`, then **Add plugin**.
+In the Claude desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `ChrisLightblade92194/mod-claude-prompt-enhancer`, then **Add plugin**.
 
 ## Usage
 
