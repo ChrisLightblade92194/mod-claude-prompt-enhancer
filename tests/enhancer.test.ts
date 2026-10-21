@@ -44,6 +44,8 @@ function engine(on: On, box: Box, forkText: string): void {
   })
   on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('env.get', () => ({ value: undefined }))
+  // Senza altre mod, sotto la nostra fascia c'è solo il segnaposto dell'engine.
+  on('ui.render', { component: 'AbovePrompt' }, () => ({ type: 'engine', ref: 0 }))
 }
 
 async function mountBand($: Engine, surface: 'terminal' | 'desktop') {
@@ -81,6 +83,60 @@ test('Invia svuota la casella e invia la bozza come parole dell’utente', async
   expect(box.draft).toBe('')
 })
 
+test('Perfeziona aggiunge le istruzioni da coach nascoste e invia la bozza', async ($, on) => {
+  const box: Box = { draft: 'riassumi il file', submitted: [], forkPrompt: '' }
+  engine(on, box, 'non usato')
+  const session = mock.session(on)
+
+  for (const surface of ['terminal', 'desktop'] as const) {
+    box.draft = 'riassumi il file'
+    box.submitted = []
+    const before = session.appended().length
+    const ui = await mountBand($, surface)
+    expect((await ui.find({ key: 'refine' }))?.text).toContain('Perfeziona')
+
+    await ui.press({ key: 'refine' })
+
+    expect(box.draft).toBe('')
+    expect(box.submitted).toHaveLength(1)
+    expect(box.submitted[0]).toContain('<bozza>\nriassumi il file\n</bozza>')
+    const rows = session.appended().slice(before)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.message.role).toBe('user')
+    const hidden = JSON.stringify(rows[0]?.message.content)
+    expect(hidden).toContain('una domanda alla volta')
+    expect(hidden).toContain('claude-prompting-best-practices')
+    await ui.unmount()
+  }
+})
+
+test('Perfeziona con la casella vuota non invia nulla', async ($, on) => {
+  const box: Box = { draft: '   ', submitted: [], forkPrompt: '' }
+  engine(on, box, 'non usato')
+  const session = mock.session(on)
+  on('ui.toast', () => ({ value: undefined }))
+
+  const ui = await mountBand($, 'terminal')
+  await ui.press({ key: 'refine' })
+
+  expect(box.submitted).toEqual([])
+  expect(session.appended()).toHaveLength(0)
+})
+
+test('Perfeziona durante un turno non invia nulla', async ($, on) => {
+  const box: Box = { draft: 'riassumi il file', submitted: [], forkPrompt: '' }
+  engine(on, box, 'non usato')
+  const session = mock.session(on)
+  on('ui.toast', () => ({ value: undefined }))
+
+  const ui = await $.ui.mount({ ...BAND, props: { ...BAND.props, isWorking: true }, surface: 'terminal' })
+  await ui.press({ key: 'refine' })
+
+  expect(box.submitted).toEqual([])
+  expect(box.draft).toBe('riassumi il file')
+  expect(session.appended()).toHaveLength(0)
+})
+
 test('/migliora <bozza> riscrive la bozza nella casella senza inviarla', async ($, on) => {
   const box: Box = { draft: '', submitted: [], forkPrompt: '' }
   engine(on, box, '## Obiettivo\nAggiungi la ricerca.')
@@ -98,4 +154,59 @@ test('/migliora <bozza> riscrive la bozza nella casella senza inviarla', async (
   expect(box.draft).toBe('## Obiettivo\nAggiungi la ricerca.')
   expect(box.forkPrompt).toContain('<bozza>\naggiungi la ricerca\n</bozza>')
   expect(box.submitted).toEqual([])
+})
+
+// Una mod che, come Replay Theater, disegna la fascia senza passare la mano.
+const ALTRA_FASCIA = {
+  name: 'altra-fascia',
+  register: (on: On) => {
+    on('ui.render', { component: 'AbovePrompt' }, ($, e) => {
+      const { Text } = $.ui.resolve(e)
+      return Text({ children: 'fascia di un’altra mod' })
+    })
+  },
+}
+
+test('la fascia convive con quella di un’altra mod', { plugins: [ALTRA_FASCIA] }, async ($, on) => {
+  const box: Box = { draft: '', submitted: [], forkPrompt: '' }
+  engine(on, box, 'non usato')
+
+  const ui = await mountBand($, 'terminal')
+
+  expect((await ui.find({ key: 'enhance' }))?.text).toContain('Migliora')
+  expect(await ui.find({ text: /fascia di un’altra mod/ })).toBeDefined()
+})
+
+test('la fascia non annida il segnaposto dell’engine, che il desktop scarterebbe', async ($, on) => {
+  const box: Box = { draft: '', submitted: [], forkPrompt: '' }
+  engine(on, box, 'non usato')
+
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await mountBand($, surface)
+    expect((await ui.find({ key: 'enhance' }))?.text).toContain('Migliora')
+    expect(JSON.stringify(await ui.drawn())).not.toContain('"engine"')
+    await ui.unmount()
+  }
+})
+
+test('/perfeziona <bozza> avvia il coaching come il pulsante', async ($, on) => {
+  const box: Box = { draft: '', submitted: [], forkPrompt: '' }
+  engine(on, box, 'non usato')
+  const session = mock.session(on)
+  const clock = mock.clock(on)
+
+  const ran = await $.command.run({
+    command: 'perfeziona',
+    args: 'riassumi il file',
+    origin: { kind: 'composer' },
+    presentation: { isFullscreen: false, columns: 80 },
+  })
+  expect(ran.text).toBeUndefined()
+
+  await clock.advance(1)
+  expect(box.submitted).toHaveLength(1)
+  expect(box.submitted[0]).toContain('<bozza>\nriassumi il file\n</bozza>')
+  const rows = session.appended()
+  expect(rows).toHaveLength(1)
+  expect(JSON.stringify(rows[0]?.message.content)).toContain('una domanda alla volta')
 })

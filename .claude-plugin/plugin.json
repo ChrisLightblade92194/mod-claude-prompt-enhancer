@@ -1,7 +1,7 @@
 {
   "name": "prompt-enhancer",
-  "version": "0.1.0",
-  "description": "Pulsanti Migliora e Invia sopra il prompt: riscrive la bozza con skill adatte, contesto di progetto, decisioni da chiedere e risultato atteso.",
+  "version": "0.2.0",
+  "description": "Pulsanti Migliora, Perfeziona e Invia sopra il prompt: riscrive la bozza con skill adatte, contesto di progetto, decisioni da chiedere e risultato atteso, oppure la perfeziona con Claude come coach secondo le linee guida Anthropic.",
   "author": { "name": "ChrisLightblade92194" },
   "license": "MIT",
   "types": "./types/index.d.ts"

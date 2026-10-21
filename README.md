@@ -1,13 +1,14 @@
 # Prompt Enhancer
 
-A Claude Code mod that turns a rough prompt draft into a complete, ready-to-send prompt, without sending it.
+A Claude Code mod that turns a rough prompt draft into a complete, ready-to-send prompt, either in one shot or through an interactive coaching session.
 
-It adds two buttons above the prompt box:
+It adds three buttons above the prompt box:
 
-- **Migliora** (Improve) rewrites the draft in the prompt box, in place.
+- **Migliora** (Improve) rewrites the draft in the prompt box, in place, without sending it.
+- **Perfeziona** (Refine) starts a conversation in which Claude coaches you to improve the draft according to [Anthropic's prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices).
 - **Invia** (Send) sends the current draft.
 
-The rewritten prompt always has five sections:
+The prompt rewritten by **Migliora** always has five sections:
 
 1. **Goal**: your request, clarified, with every detail and constraint of the draft kept.
 2. **Skills to use**: the installed skills that fit the task, each as `/skill-name` with one line on why.
@@ -45,6 +46,18 @@ You can also type `/migliora <draft>` and press Enter: the rewritten prompt appe
 
 If you edit the prompt box while a rewrite is running, the mod does not overwrite your text and shows an error instead.
 
+### Refine with a coach
+
+Press **Perfeziona** to learn the guidelines while you improve the draft. The mod sends your draft to Claude with coaching instructions, and Claude then:
+
+1. assesses the draft against a checklist of Anthropic's guidelines (clarity, context and motivation, sequential steps, examples, XML tags, role, long documents, response format, action versus suggestion, reasoning and self-checks, agentic coding);
+2. asks you one question at a time, at most five, naming the guideline behind each question and why it matters, with options to pick from when the answers are predictable;
+3. writes the improved prompt in a single code block, lists the main changes with the guideline behind each, and gives a verdict for every checklist item.
+
+The coaching instructions are added to the conversation as a hidden row that Claude reads and you do not see; the transcript shows only a short message with your draft. Claude does not carry out the task in the draft and does not touch files during coaching. **Perfeziona** waits for Claude to finish any turn in progress: press it again when Claude is idle.
+
+You can also type `/perfeziona <draft>` and press Enter: it starts the same coaching. Typed while Claude is working, it runs when the turn ends.
+
 ## What is sent to the model
 
 When you press **Migliora**, the mod collects context from the current project and sends it, together with your draft, to the model of your own Claude Code session. No external service is involved. The context is:
@@ -58,7 +71,8 @@ The rewrite first asks a fork of the current conversation, which already knows y
 
 ## Notes
 
-- **Invia** sends the draft as your own words, but the transcript shows that the mod sent it. `@file` mentions and pasted images are not expanded when sent this way; for those prompts, press Enter instead.
+- **Invia** and **Perfeziona** send the draft as your own words, but the transcript shows that the mod sent it. `@file` mentions and pasted images are not expanded when sent this way; for those prompts, press Enter instead.
+- Other mods can draw in the same band above the prompt. Prompt Enhancer draws their rows under its buttons instead of hiding them. A mod placed above it in Claude Code's chain that does not do the same can still hide the buttons; the `/migliora` and `/perfeziona` commands work in any case.
 - Claude Code's mod API is in early access and may change between releases.
 
 ## Development
