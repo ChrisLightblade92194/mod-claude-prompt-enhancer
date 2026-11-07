@@ -73,6 +73,7 @@ The rewrite first asks a fork of the current conversation, which already knows y
 
 - **Invia** and **Perfeziona** send the draft as your own words, but the transcript shows that the mod sent it. `@file` mentions and pasted images are not expanded when sent this way; for those prompts, press Enter instead.
 - Other mods can draw in the same band above the prompt. Prompt Enhancer draws their rows under its buttons instead of hiding them. A mod placed above it in Claude Code's chain that does not do the same can still hide the buttons; the `/migliora` and `/perfeziona` commands work in any case.
+- In the Claude desktop app, a session just opened with **+** does not start Claude Code until you send its first message, so mods are not loaded yet and the buttons do not appear. Send any first message, or start directly with `/migliora <draft>` or `/perfeziona <draft>`. The app warns that the command is not valid but sends it anyway: Claude Code starts, runs the command, and the buttons appear from then on.
 - Claude Code's mod API is in early access and may change between releases.
 
 ## Development
