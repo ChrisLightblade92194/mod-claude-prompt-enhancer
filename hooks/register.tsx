@@ -307,7 +307,7 @@ async function refine($: $, isWorking: boolean): Promise<void> {
   await coach($, draft, true)
 }
 
-// Avvia il coaching su `draft`; con `clearBox` svuota la casella di prompt prima di inviare.
+// Avvia il coaching su `draft`; con `clearBox` svuota la casella solo dopo l'invio e se invariata.
 async function coach($: $, draft: string, clearBox: boolean): Promise<void> {
   // Le istruzioni da coach entrano come riga nascosta: il modello la legge, l'utente no.
   // Un hook prompt.submit della mod non vede i messaggi che la mod stessa invia.
@@ -319,9 +319,25 @@ async function coach($: $, draft: string, clearBox: boolean): Promise<void> {
     return
   }
 
-  if (clearBox) await $.prompt.fill({ text: '', mode: 'replace' })
   await setStatus($, { kind: 'idle' })
-  await $.prompt.submit({ text: `${COACH_HEADER}\n\n<bozza>\n${draft}\n</bozza>`, asUser: true })
+  try {
+    const submitted = await $.prompt.submit({ text: `${COACH_HEADER}\n\n<bozza>\n${draft}\n</bozza>`, asUser: true })
+    if (submitted.drop !== undefined) throw new Error(submitted.drop)
+  } catch (error) {
+    $.ui.toast(`Prompt Enhancer: invio fallito (${String(error)}). Le istruzioni da coach sono già entrate nella conversazione.`)
+    const current = await $.prompt.read()
+    if (current.text === '') await $.prompt.fill({ text: draft, mode: 'replace' })
+    return
+  }
+
+  if (clearBox) {
+    const current = await $.prompt.read()
+    if (current.text === draft) {
+      await $.prompt.fill({ text: '', mode: 'replace' })
+    } else {
+      $.ui.toast('Prompt Enhancer: la casella è cambiata durante l’invio; le modifiche sono state conservate.')
+    }
+  }
 }
 
 export const register: Register = on => {
@@ -351,7 +367,9 @@ export const register: Register = on => {
       return {}
     }
     // Dentro command.run un invio aspetterebbe il turno che il comando tiene: parte subito dopo.
-    $.clock.after(0, () => void coach($, draft, false))
+    $.clock.after(0, () => void coach($, draft, false).catch(error => {
+      $.ui.toast(`Prompt Enhancer: avvio del coaching fallito (${String(error)}).`)
+    }))
     return {}
   })
 
